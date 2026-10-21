@@ -15,6 +15,8 @@ flock($lock, LOCK_EX);
 try {
  $file=$dir.'/catalogo.json';
  $db=is_file($file)?json_decode(file_get_contents($file),true,512,JSON_THROW_ON_ERROR):['folders'=>[], 'images'=>[], 'terms'=>[]];
+ $signatureDefaults=json_decode(file_get_contents(__DIR__.'/signatures.json'),true,512,JSON_THROW_ON_ERROR);
+ $db['signatures']=array_replace($signatureDefaults,$db['signatures']??[]);
  $action=$_GET['action']??'state';
  $in=[];
  if ($_SERVER['REQUEST_METHOD']==='POST') {
@@ -71,14 +73,28 @@ try {
    if (!isset($db['images'][$id])) { $db['images'][$id]=['id'=>$id,'folder'=>$fid,'relative'=>$rel,'status'=>'pending','record'=>new stdClass(),'revision'=>0]; $added++; }
   }
   $result=['added'=>$added,'folder'=>$fid];
+ } elseif ($action==='add_signature') {
+  $name=$in['name']??'';
+  if (!is_string($name)) fail('Descripción de firma inválida.');
+  $name=trim(preg_replace('/\\s+/u',' ',$name));
+  if ($name==='' || strlen($name)>600) fail('Escribí una descripción de hasta 600 bytes.');
+  $fold=function($value) { return function_exists('mb_strtolower')?mb_strtolower($value,'UTF-8'):strtolower($value); };
+  $code=null; $max=0;
+  foreach ($db['signatures'] as $key=>$value) {
+   if ($fold($value)===$fold($name)) $code=$key;
+   if (preg_match('/^BIX-(\\d+)$/',$key,$match)) $max=max($max,(int)$match[1]);
+  }
+  if ($code===null) { $code='BIX-'.str_pad((string)($max+1),2,'0',STR_PAD_LEFT); $db['signatures'][$code]=$name; }
+  $result=['code'=>$code,'signatures'=>$db['signatures']];
  } elseif ($action==='save') {
   $id=$in['id']??''; if (!isset($db['images'][$id])) fail('Archivo inexistente.');
   $im=&$db['images'][$id]; if (($in['revision']??-1)!==($im['revision']??0)) fail('El registro cambió en otra ventana. Recargá antes de guardar.');
   $r=$in['record']??[]; if (!is_array($r)) fail('Registro inválido.');
   $clean=[];
-  foreach(['side','number','date','kind','portrait','frame','direction','environment','notes','parent'] as $key) {
+  foreach(['side','number','date','kind','portrait','frame','direction','environment','notes','parent','signature'] as $key) {
    $v=$r[$key]??''; if (!is_string($v) || strlen($v)>5000) fail('Campo inválido: '.$key); $clean[$key]=trim($v);
   }
+  if ($clean['signature']!=='' && !isset($db['signatures'][$clean['signature']])) fail('Elegí una firma existente o agregala con el botón Nueva firma.');
   if (!in_array($clean['side'],['Frente','Reverso','Tapa','Otros'],true)) fail('Elegí frente, reverso, tapa u otros.');
   if ($clean['parent']!=='' && ($clean['parent']===$id || !isset($db['images'][$clean['parent']]))) fail('Vínculo de imagen inválido.');
   foreach(['people','objects','highlights'] as $key) {

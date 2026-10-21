@@ -12,11 +12,11 @@ Al agregar más archivos, volver a leer la misma carpeta. No duplica imágenes n
 
 ## Actualizar la instalación existente
 
-Copiar `api.php`, `index.php` y la carpeta `assets` completa sobre la instalación anterior, y recargar con **Ctrl+F5**. No reemplazar ni borrar `datos`: allí están los registros. No hace falta volver a agregar la carpeta que ya se leyó. El script `preparar_vistas.py` sigue incluido como alternativa opcional; las vistas anteriores también se aprovechan.
+Copiar `api.php`, `index.php`, `signatures.json` y la carpeta `assets` completa sobre la instalación anterior, y recargar con **Ctrl+F5**. No reemplazar ni borrar `datos`: allí están los registros. No hace falta volver a agregar la carpeta que ya se leyó. El script `preparar_vistas.py` sigue incluido como alternativa opcional; las vistas anteriores también se aprovechan.
 
 ## Carga
 
-Miniaturas → seleccionar imagen o **Continuar carga** → identificación → tipo → personas → objetos → destacados → revisión. La imagen queda visible, con zoom. Se separan tipo de retrato, encuadre y orientación porque son dimensiones combinables.
+Miniaturas → seleccionar imagen o **Continuar carga** → identificación → tipo → personas → objetos → destacados → firma del estudio → revisión. La imagen queda visible, con zoom. Se separan tipo de retrato, encuadre y orientación porque son dimensiones combinables.
 
 - Enter avanza; Tab recorre campos; Espacio marca opciones. Las opciones múltiples permanecen abiertas hasta avanzar.
 - Esc retrocede un paso; en el primero solicita descartar si hay cambios.
@@ -26,6 +26,14 @@ Miniaturas → seleccionar imagen o **Continuar carga** → identificación → 
 - Fecha libre: `1905`, `ca. 1910`, `1900–1910`, etc. No se asignan fechas de demostración.
 - Reverso/tapa/otros se pueden vincular a un frente ya guardado desde Identificación. Cada archivo conserva su descripción.
 - Filtros por carpeta, estado y texto. Exportación JSON completa para respaldo e integración posterior. No publica automáticamente en el sitio demostrativo.
+
+## Firmas del estudio
+
+La pantalla Firma del estudio permite elegir una variante BIX-01 a BIX-13, Sin firma o Por identificar. Las descripciones iniciales se transcribieron de la captura del catalogador anterior proporcionada por el usuario. El detalle completo aparece debajo del combo.
+
+Con **Nueva firma** se abre un campo de descripción; Enter agrega y selecciona la firma. El código correlativo se asigna automáticamente (BIX-14, etc.). Se conserva en el catálogo local inmediatamente y queda disponible para los siguientes registros. Si ya existe una descripción igual, se reutiliza. La selección de cada imagen se guarda con su registro o borrador. En revisión y exportación JSON se incluye la firma; el catálogo exportado contiene también el repertorio completo.
+
+Las fichas anteriores permanecen sin firma consignada hasta que se seleccione una; no se les asigna automáticamente Sin firma. Actualizar `signatures.json` no pisa las firmas añadidas por el usuario, que se conservan en `datos/catalogo.json`.
 
 ## Respaldo y alcance
 
