@@ -22,16 +22,40 @@ try {
   $in=json_decode(file_get_contents('php://input'),true,512,JSON_THROW_ON_ERROR);
  } elseif (!in_array($action,['state','image','export'],true)) fail('Usá POST.');
  if ($action==='state') output(['db'=>$db,'token'=>$_SESSION['token']]);
- if ($action==='image') {
-  $id=$_GET['id']??''; $im=$db['images'][$id]??null; if (!$im) fail('Imagen inexistente.');
+ // Resolver archivos solo desde una imagen ya incorporada al catálogo.
+ if ($action==='image' || $action==='preview') {
+  $id=$action==='image'?($_GET['id']??''):($in['id']??'');
+  $im=$db['images'][$id]??null; if (!$im) fail('Imagen inexistente.');
   $root=$db['folders'][$im['folder']]['path'];
-  $source=$root.DIRECTORY_SEPARATOR.str_replace('/',DIRECTORY_SEPARATOR,$im['relative']);
+  $source=realpath($root.DIRECTORY_SEPARATOR.str_replace('/',DIRECTORY_SEPARATOR,$im['relative']));
+  $base=realpath($root);
+  if (!$source || !$base || strpos($source,$base.DIRECTORY_SEPARATOR)!==0 || !is_file($source) || !is_readable($source)) fail('No se puede leer el archivo original. Revisá la carpeta o la unidad.');
   $ext=strtolower(pathinfo($source,PATHINFO_EXTENSION));
-  $path=in_array($ext,['tif','tiff'])?$root.DIRECTORY_SEPARATOR.'.bixio-vistas'.DIRECTORY_SEPARATOR.str_replace('/',DIRECTORY_SEPARATOR,$im['relative']).'.jpg':$source;
-  $resolved=realpath($path); $base=realpath($root);
-  if (!$resolved || strpos($resolved,$base.DIRECTORY_SEPARATOR)!==0 || !is_file($resolved)) { http_response_code(404); exit('Generá las vistas JPG con preparar_vistas.py.'); }
-  header('Content-Type: '.(in_array($ext,['tif','tiff','jpg','jpeg'])?'image/jpeg':($ext==='png'?'image/png':'image/webp')));
-  readfile($resolved); exit;
+  $version=hash('sha256',$id.':'.filesize($source).':'.filemtime($source));
+  $cacheDir=$dir.'/vistas'; $cache=$cacheDir.'/'.$version.'.jpg';
+  if ($action==='preview') {
+   if (!hash_equals($version,(string)($in['version']??''))) fail('El original cambió; volvé a abrir la imagen.');
+   $encoded=$in['jpeg']??'';
+   if (!is_string($encoded) || strlen($encoded)>8000000) fail('Vista demasiado grande.');
+   $bytes=base64_decode($encoded,true);
+   $info=$bytes===false?false:@getimagesizefromstring($bytes);
+   if (!$info || $info[2]!==IMAGETYPE_JPEG || max($info[0],$info[1])>2400) fail('La vista no es un JPEG válido.');
+   if (!is_dir($cacheDir) && !mkdir($cacheDir,0775,true)) fail('No se pudo crear la carpeta de vistas.');
+   if (file_put_contents($cache,$bytes,LOCK_EX)===false) fail('No se pudo guardar la vista.');
+   output(['cached'=>true]);
+  }
+  $path=$source; $mime=['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','webp'=>'image/webp','tif'=>'image/tiff','tiff'=>'image/tiff'][$ext]??'application/octet-stream';
+  if (in_array($ext,['tif','tiff'],true)) {
+   $legacy=realpath($root.DIRECTORY_SEPARATOR.'.bixio-vistas'.DIRECTORY_SEPARATOR.str_replace('/',DIRECTORY_SEPARATOR,$im['relative']).'.jpg');
+   if (is_file($cache)) { $path=$cache; $mime='image/jpeg'; }
+   elseif ($legacy && strpos($legacy,$base.DIRECTORY_SEPARATOR)===0 && filemtime($legacy)>=filemtime($source)) { $path=$legacy; $mime='image/jpeg'; }
+  }
+  header('Content-Type: '.$mime);
+  header('X-Image-Version: '.$version);
+  header('X-Content-Type-Options: nosniff');
+  // No retener bloqueos mientras el navegador recibe un TIFF pesado.
+  session_write_close(); flock($lock,LOCK_UN); fclose($lock);
+  readfile($path); exit;
  }
  if ($action==='export') { header('Content-Disposition: attachment; filename="bixio-catalogo.json"'); output($db); }
  if ($action==='scan') {

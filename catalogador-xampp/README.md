@@ -5,10 +5,14 @@
 1. Copiar esta carpeta como `C:\xampp\htdocs\bixio`.
 2. Iniciar Apache desde XAMPP. No necesita MySQL: guarda los registros en JSON con bloqueo de escritura y respaldo anterior.
 3. Abrir `http://localhost/bixio/`.
-4. Para ver TIF: instalar Pillow una sola vez con el Python habitual: `python -m pip install Pillow`. Ejecutar `python preparar_vistas.py`; abre un selector de carpeta. También admite `python preparar_vistas.py "D:\Fotos Bixio"`. Genera vistas en `.bixio-vistas` dentro de la carpeta elegida. Conserva los TIF; muestra la primera página de cada TIF multipágina. Si el Python portable tiene otro ejecutable, usar su ruta en lugar de `python`.
-5. En el catalogador, pulsar **Agregar carpeta** y pegar la misma ruta completa, por ejemplo `D:\Fotos Bixio`. Lee subcarpetas. No sube ni copia originales. JPG/PNG/WEBP no requieren preparación.
+4. Pulsar **Agregar carpeta** y pegar la ruta completa donde están los TIF, por ejemplo `D:\Fotos Bixio`. Incluye subcarpetas.
+5. Las vistas se generan automáticamente al aparecer las imágenes en pantalla, usando el mismo decodificador del catalogador de montadas. La primera apertura de un TIF pesado puede tardar unos segundos; las vistas se guardan en `datos/vistas` para las siguientes aperturas. No necesita Python, Pillow ni extensiones TIFF de PHP.
 
-Al agregar más archivos, volver a ejecutar el generador y leer la misma carpeta. No duplica imágenes ni pisa catalogaciones. Mantener la ruta de la carpeta; moverla requiere una migración de rutas.
+Al agregar más archivos, volver a leer la misma carpeta. No duplica imágenes ni pisa catalogaciones. Mantener la ruta de la carpeta; moverla requiere una migración de rutas. Conserva los TIF originales y muestra la primera página de cada archivo multipágina. El procesamiento se realiza de a una imagen en un Web Worker para mantener los formularios disponibles. También acepta JPG, PNG y WEBP.
+
+## Actualizar la instalación existente
+
+Copiar `api.php`, `index.php` y la carpeta `assets` completa sobre la instalación anterior, y recargar con **Ctrl+F5**. No reemplazar ni borrar `datos`: allí están los registros. No hace falta volver a agregar la carpeta que ya se leyó. El script `preparar_vistas.py` sigue incluido como alternativa opcional; las vistas anteriores también se aprovechan.
 
 ## Carga
 
@@ -27,4 +31,8 @@ Miniaturas → seleccionar imagen o **Continuar carga** → identificación → 
 
 Respaldar toda la carpeta `datos` junto con las imágenes y sus vistas. `catalogo.json` es la base; `catalogo.anterior.json` conserva solo la versión anterior, no un historial completo. Exportar periódicamente y guardar copias fechadas. No reemplazar `datos` al actualizar código.
 
-PHP 7.4+ / 8.x y Apache; sin extensiones TIFF, Composer ni dependencias web externas. Python 3 con Pillow solo para preparar TIF. Diseñado para uso local en la computadora con XAMPP. Bloquea accesos que no sean localhost; no desplegar como panel público. No incluye autenticación, publicación, ni migración a MySQL.
+PHP 7.4+ / 8.x y Apache; navegador moderno con Web Workers. Sin extensiones TIFF, Composer ni dependencias web externas. Diseñado para uso local en la computadora con XAMPP. Bloquea accesos que no sean localhost; no desplegar como panel público. No incluye autenticación, publicación, ni migración a MySQL.
+
+## Decodificador
+
+`assets/tiff-decoder.js` se conserva sin modificaciones desde el ZIP de relevamiento-montadas-mysql provisto por el usuario. Incluye UTIF y pako.
