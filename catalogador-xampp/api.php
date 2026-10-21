@@ -23,7 +23,14 @@ try {
   if (!hash_equals($_SESSION['token'], $_SERVER['HTTP_X_CSRF_TOKEN']??'')) fail('Sesión vencida. Recargá la página.');
   $in=json_decode(file_get_contents('php://input'),true,512,JSON_THROW_ON_ERROR);
  } elseif (!in_array($action,['state','image','export'],true)) fail('Usá POST.');
- if ($action==='state') output(['db'=>$db,'token'=>$_SESSION['token']]);
+ if ($action==='state') {
+  // json_decode(..., true) convierte también un objeto vacío en [].
+  // Mantener los registros como objetos JSON al enviarlos al editor.
+  $state=$db;
+  foreach ($state['images'] as &$stateImage) $stateImage['record']=(object)($stateImage['record']??[]);
+  unset($stateImage);
+  output(['db'=>$state,'token'=>$_SESSION['token']]);
+ }
  // Resolver archivos solo desde una imagen ya incorporada al catálogo.
  if ($action==='image' || $action==='preview') {
   $id=$action==='image'?($_GET['id']??''):($in['id']??'');
