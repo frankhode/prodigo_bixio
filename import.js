@@ -18,7 +18,7 @@ window.BixioImport=(()=>{
  function bindGallery(){observer.disconnect();if(catalog)gallery.querySelectorAll('img').forEach(img=>observer.observe(img));}
  function clearUrls(){for(const url of urls.values())URL.revokeObjectURL(url);urls.clear();filesById.clear();pending.clear();}
  $('import-json').onclick=()=>$('json-picker').click();
- $('json-picker').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const next=BixioFormat.convert(JSON.parse(await file.text()));closeViewer();sourceVersion++;clearUrls();catalog=next;installCatalog(next.items,next.facets);$('link-images').hidden=false;$('restore-demo').hidden=false;note.textContent=`${next.items.length} fichas catalogadas importadas. `+(next.source.previews?'Las imágenes están incluidas.':'Elegí Vincular imágenes y seleccioná la carpeta de los TIF o JPG.');}catch(error){note.textContent=error.message;}finally{e.target.value='';}};
+ $('json-picker').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const next=BixioFormat.convert(JSON.parse(await file.text()));closeViewer();window.BixioRemote?.stop();sourceVersion++;clearUrls();catalog=next;installCatalog(next.items,next.facets);$('link-images').hidden=false;$('restore-demo').hidden=false;note.textContent=`${next.items.length} fichas catalogadas importadas. `+(next.source.previews?'Las imágenes están incluidas.':'Elegí Vincular imágenes y seleccioná la carpeta de los TIF o JPG.');}catch(error){note.textContent=error.message;}finally{e.target.value='';}};
  $('link-images').onclick=()=>$('image-picker').click();
  $('image-picker').onchange=e=>{
  if(!catalog)return;const files=[...e.target.files].filter(f=>/\.(tiff?|jpe?g|png|webp)$/i.test(f.name)),byName=new Map();
@@ -32,5 +32,5 @@ window.BixioImport=(()=>{
  sourceVersion++;clearUrls();filesById=matches;render();if(!viewer.hidden)showPhoto();note.textContent=`${matches.size} imágenes vinculadas de ${catalog.images.size}.`+(ambiguous?` ${ambiguous} nombres repetidos: seleccioná la carpeta específica para evitar confundirlos.`:'');e.target.value='';
  };
  $('restore-demo').onclick=()=>location.reload();
- return {paint,bindGallery};
+ return {paint,bindGallery,deactivate(){catalog=null;clearUrls();observer.disconnect();}};
 })();
