@@ -44,3 +44,13 @@ PHP 7.4+ / 8.x y Apache; navegador moderno con Web Workers. Sin extensiones TIFF
 ## Decodificador
 
 `assets/tiff-decoder.js` se conserva sin modificaciones desde el ZIP de relevamiento-montadas-mysql provisto por el usuario. Incluye UTIF y pako.
+
+## Ver la catalogación en el sitio web
+
+En XAMPP, pulsar **Exportar para visor**. Se genera `bixio-visor.json` con las fichas completas y las vistas de sus imágenes, incluidas las de reversos catalogados. No incluye rutas absolutas del disco. Mientras prepara los TIF puede tardar; muestra el progreso.
+
+Abrir https://frankhode.github.io/prodigo_bixio/ y usar **Importar JSON**. Seleccionar `bixio-visor.json`: ya contiene las imágenes, no requiere subir TIF a GitHub. La importación es local a esa sesión del navegador; no modifica el catálogo público ni envía el archivo a un servidor. Para compartir esta vista, compartir el JSON y la URL; cada persona lo importa. Para publicarlo como catálogo predeterminado se requiere una carga posterior al repositorio.
+
+También admite el **Respaldo JSON** existente (`bixio-catalogo.json`). En ese caso usar **Vincular imágenes** y seleccionar la carpeta de los TIF o JPG originales. El navegador solicita permiso para leer los archivos elegidos y genera sus vistas con el decodificador incluido. Si hay nombres repetidos y no se puede determinar una ruta única, informa el problema sin asignar una imagen dudosa. Al recargar la página hay que volver a importar y vincular.
+
+El visor muestra las fichas completas; las pendientes y los borradores no se incluyen. Las fechas sin consignar se mantienen visibles al no aplicar un filtro de período. Se conservan firmas nuevas, términos propios y las relaciones frente/reverso. **Volver a la muestra** restaura la demostración.

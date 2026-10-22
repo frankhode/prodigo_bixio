@@ -86,3 +86,6 @@ button:disabled{opacity:.3;cursor:default}
  .filter-chip:hover{background:transparent}
  .filter-chip.selected:hover,.filter-chip.has-selection:hover{background:var(--ink)}
 }
+
+
+[hidden]{display:none!important}.import-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0 20px}.import-tools p{font-size:12px;color:var(--muted);line-height:1.6;width:100%;margin:0}.record-details{padding:10px 5%;max-height:85px;overflow:auto;flex-shrink:0;color:#c5b6a6;font-size:12px;line-height:1.7}.record-details:empty{display:none}

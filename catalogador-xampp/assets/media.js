@@ -36,5 +36,5 @@ window.BixioMedia=(()=>{
     try{const url=await get(id,priority);if(img.dataset.imageId!==id||!img.isConnected)return;img.src=url;img.hidden=false;status.hidden=true;}
     catch(e){if(img.dataset.imageId!==id||!img.isConnected)return;status.textContent=e.message;status.hidden=false;}
   }
-  return {show};
+  return {show,get};
 })();
