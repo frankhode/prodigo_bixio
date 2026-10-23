@@ -91,3 +91,5 @@ button:disabled{opacity:.3;cursor:default}
 [hidden]{display:none!important}.import-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0 20px}.import-tools p{font-size:12px;color:var(--muted);line-height:1.6;width:100%;margin:0}.record-details{padding:10px 5%;max-height:85px;overflow:auto;flex-shrink:0;color:#c5b6a6;font-size:12px;line-height:1.7}.record-details:empty{display:none}
 
 .live-label{font-size:12px;display:flex;gap:8px;align-items:center}.live-label select{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink)}
+
+#image-sequence{display:flex;gap:6px;overflow:auto;flex-shrink:0;padding:8px 20px;max-width:100%;justify-content:center}#image-sequence:empty{display:none}#image-sequence button{background:#393630;color:#fff;border:1px solid #756b60;border-radius:16px;padding:6px 12px;white-space:nowrap;cursor:pointer}#image-sequence button[aria-pressed="true"]{background:#eee1cc;color:#33281e}#image-position{color:#e3d4c1;text-align:center;font-size:12px;flex-shrink:0}

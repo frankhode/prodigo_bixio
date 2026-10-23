@@ -51,7 +51,7 @@ const GithubStore=(()=>{
   if(action==='save'){
    const image=next.images[input.id];if(!image)throw Error('Imagen inexistente.');if((image.revision||0)!==input.revision)throw Error('El registro cambió. Recargá la colección.');
    const record=RecordFields.normalize(clone({...input.record}));if(!['Frente','Reverso','Tapa','Otros'].includes(record.side))throw Error('Elegí la parte del documento.');
-   if(record.parent&&(record.parent===image.id||!next.images[record.parent]))throw Error('Vínculo de frente inválido.');
+   if(record.parent&&(record.parent===image.id||!next.images[record.parent]))throw Error('Vínculo de imagen inválido.');
    if(record.signature&&!next.signatures[record.signature])throw Error('La firma ya no está disponible.');
    if(record.kind!=='Retrato')for(const key of ['portrait','frame','direction'])record[key]='';
    RecordFields.validateIdentifier(next,input.id,record);

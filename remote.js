@@ -16,8 +16,9 @@ window.BixioRemote=(()=>{
    if(!/^data\/collections\/[a-z0-9-]+\.json$/.test(meta.path))throw Error('Ruta de colección inválida.');
    const source=await json(meta.path,meta.version);if(current!==requested)return;if(source.version!==meta.version)throw Error('GitHub está propagando el último guardado.');
    const ready=Object.fromEntries(Object.entries(source.images).filter(([,image])=>image.status==='done'&&image.media?.src&&image.media?.thumb));
-   const result=Object.keys(ready).length?BixioFormat.convert({...source,images:ready}):{items:[],facets:{}};
+   const result=Object.keys(ready).length?BixioFormat.convert({...source,images:ready},source.images):{items:[],facets:{}};
    for(const item of result.items){const image=ready[item.id];item.src=safeMedia(image.media.src);item.thumb=safeMedia(image.media.thumb);item.w=image.media.w;item.h=image.media.h;delete item.imageKey;delete item.backKey;
+    for(const frame of item.sequence||[]){const media=ready[frame.id].media;frame.src=safeMedia(media.src);frame.thumb=safeMedia(media.thumb);delete frame.imageKey;}
     if(item.back){item.backSrc=safeMedia(ready[item.back]?.media?.src);}
    }
    const wasOpen=!viewer.hidden,previous=wasOpen?shown[activeIndex]?.id:null;

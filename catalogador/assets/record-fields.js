@@ -3,7 +3,7 @@
 const RecordFields=(()=>{
  const definitions={
   identifier:{label:'Identificador único',type:'identifier'},author:{label:'Autor / fotógrafo',type:'author'},identifiedPeople:{label:'Personas identificadas',type:'names'},
-  side:{label:'Parte del documento',options:['Frente','Reverso','Tapa','Otros']},number:{label:'Número original'},date:{label:'Fecha'},
+  displayOrder:{label:'Orden de visualización'},side:{label:'Parte del documento',options:['Frente','Reverso','Tapa','Otros']},number:{label:'Número original'},date:{label:'Fecha'},
   kind:{label:'Tipo de imagen',options:['Retrato','Otros']},portrait:{label:'Tipo de retrato',options:['Individual','Grupal'],portraitOnly:true},
   frame:{label:'Encuadre',options:['Busto','Medio cuerpo','Tres cuartos','Cuerpo entero'],portraitOnly:true},direction:{label:'Orientación',options:['Frente','Perfil','Tres cuartos','Mixta'],portraitOnly:true},
   environment:{label:'Ambiente',options:['Estudio','Interior','Exterior']},people:{label:'Personas: categorías',type:'tags'},objects:{label:'Objetos',type:'tags'},highlights:{label:'Destacados',type:'tags'},signature:{label:'Firma del estudio',type:'signature'},notes:{label:'Notas'}
@@ -18,15 +18,16 @@ const RecordFields=(()=>{
  function normalize(record){
   const next={...record};
   for(const key of ['identifier','identifierType','author'])if(key in next){if(typeof next[key]!=='string'||next[key].length>300)throw Error('Valor inválido para '+definitions[key]?.label+'.');next[key]=next[key].trim();}
+  if('displayOrder' in next){if(next.displayOrder==='')next.displayOrder='';else {const n=Number(next.displayOrder);if(!Number.isInteger(n)||n<1||n>9999)throw Error('El orden debe ser un número entre 1 y 9999.');next.displayOrder=n;}}
   if('identifiedPeople'in next)next.identifiedPeople=cleanNames(next.identifiedPeople);
   if(next.identifier&&!next.identifierType)next.identifierType='Otro';
   if(next.identifierType&&!['Barcode Aleph','Inventario','Otro'].includes(next.identifierType))throw Error('Tipo de identificador inválido.');
   return next;
  }
  function validateIdentifier(db,id,record){
-  if(!record.identifier)return;const images={...db.images,[id]:{...db.images[id],record}};
-  const root=start=>{let current=start;const seen=new Set();while(images[current]?.record?.parent){if(seen.has(current))throw Error('Hay un ciclo entre los frentes y reversos vinculados.');seen.add(current);current=images[current].record.parent;}return current;};
-  const key=record.identifier.toLocaleUpperCase(),ownRoot=root(id);
+  const images={...db.images,[id]:{...db.images[id],record}};
+  const root=start=>{let current=start;const seen=new Set();while(images[current]?.record?.parent){if(seen.has(current))throw Error('El vínculo forma un ciclo. Elegí otra imagen o dejá la pieza sin vínculo.');seen.add(current);current=images[current].record.parent;}return current;};
+  const ownRoot=root(id);if(!record.identifier)return;const key=record.identifier.toLocaleUpperCase();
   for(const other of Object.values(images))if(other.id!==id&&String(other.record?.identifier||'').trim().toLocaleUpperCase()===key&&root(other.id)!==ownRoot)throw Error('El identificador '+record.identifier+' ya pertenece a '+(other.record.number||other.relative)+'. Solo los archivos de una misma pieza vinculada pueden compartirlo.');
  }
  return {definitions,has,value,applicable,text,stats,candidates,cleanNames,normalize,validateIdentifier};

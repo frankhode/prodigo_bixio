@@ -79,3 +79,8 @@ Se puede guardar un campo vacío como revisado si el dato no está disponible; a
 El guardado puntual conserva todos los demás campos, las vistas y el estado de la ficha: no convierte automáticamente un borrador en catalogado ni reabre una ficha completa. Cada operación conserva el control de revisiones y se registra en GitHub. Las marcas de revisión se almacenan en `fieldReviews`, fuera de los datos descriptivos de la imagen. El panel se genera desde las definiciones de `assets/record-fields.js`, donde pueden incorporarse futuros campos.
 
 El visor público muestra autor, identificador y personas identificadas, y ofrece filtros por autor y por nombres cuando hay datos.
+
+### Piezas con varias imágenes
+En el paso Identificación se puede vincular cualquier imagen con otra de la misma pieza, incluso formando cadenas (tapa → otros → frente → reverso). No se admiten ciclos. Las vinculaciones anteriores siguen funcionando.
+
+Cada imagen tiene un «Orden de visualización», también disponible en Completar / revisar un campo. Usar 1, 2, 3… para fijar la secuencia; sin orden explícito se usa frente, reverso, tapa, otros y nombre de archivo para desempatar. El visor muestra una tarjeta por frente completo. Las partes sin un frente vinculado no generan tarjetas. Dentro de la ficha solo se publican las imágenes completas; autor y personas identificadas se reúnen de todas sus partes para filtros y detalle.
