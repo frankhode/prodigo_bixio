@@ -45,6 +45,22 @@ const GithubStore=(()=>{
  async function blob(base64){requireAuth();const b=await request('/git/blobs',{method:'POST',body:{content:base64,encoding:'base64'}});return b.sha;}
  async function imageEntries(image,thumb,full){const base='media/'+collectionId+'/'+image.id+'-'+image.fingerprint;const thumbSha=await blob(thumb.base64),fullSha=await blob(full.base64);image.media={thumb:base+'-thumb.'+thumb.ext,src:base+'.'+full.ext,w:full.width,h:full.height};return [{path:image.media.thumb,mode:'100644',type:'blob',sha:thumbSha},{path:image.media.src,mode:'100644',type:'blob',sha:fullSha}];}
  function url(path){if(!/^media\/[a-z0-9-]+\/[a-f0-9]+-[a-f0-9]+(?:-thumb)?\.(webp|jpg)$/.test(path))throw Error('Ruta de imagen inválida.');return RAW+path;}
+ function patchField(next,id,revision,field,value){
+   const definition=RecordFields.definitions[field];if(!definition)throw Error('Campo de revisión inválido.');
+   const image=next.images[id];if(!image)throw Error('Imagen inexistente.');if((image.revision||0)!==revision)throw Error('El registro cambió. Recargá la colección.');
+   const delta={[field]:clone(value)};
+   if(definition.type==='tags'&&(!Array.isArray(delta[field])||delta[field].some(v=>typeof v!=='string')))throw Error('Elegí términos válidos.');
+   if(!['tags','names'].includes(definition.type)&&typeof delta[field]!=='string')throw Error('Valor de campo inválido.');
+   const normalized={...image.record,...RecordFields.normalize(delta)};
+   if(field==='signature'&&normalized.signature&&!next.signatures[normalized.signature])throw Error('La firma no está disponible.');
+   RecordFields.validateOptions(normalized,image.record);
+   if(field==='parent'&&(normalized.parent===id||normalized.parent&&!next.images[normalized.parent]))throw Error('Vínculo de imagen inválido.');
+   if(field==='identifier'||field==='parent')RecordFields.validateIdentifier(next,id,normalized);
+   image.record=normalized;image.revision=(image.revision||0)+1;image.updated=new Date().toISOString();image.fieldReviews={...(image.fieldReviews||{}),[field]:image.updated};
+   if(field==='author'&&normalized.author)next.authors=[...new Set([...(next.authors||[]),normalized.author])];
+   if(['people','objects','highlights'].includes(field))next.terms[field]=[...new Set([...(next.terms[field]||[]),...(normalized[field]||[])])];
+   return image;
+ }
  async function mutate(action,input){
   if(action==='state')return {db:clone(current),token:''};
   requireAuth();const next=clone(current);
@@ -61,19 +77,17 @@ const GithubStore=(()=>{
    await commit(next);return {image:clone(current.images[input.id])};
   }
   if(action==='patch_field'){
-   const definition=RecordFields.definitions[input.field];if(!definition)throw Error('Campo de revisión inválido.');
-   const image=next.images[input.id];if(!image)throw Error('Imagen inexistente.');if((image.revision||0)!==input.revision)throw Error('El registro cambió. Recargá la colección.');
-   const delta={[input.field]:clone(input.value)};
-   if(definition.type==='tags'&&(!Array.isArray(delta[input.field])||delta[input.field].some(v=>typeof v!=='string')))throw Error('Elegí términos válidos.');
-   if(!['tags','names'].includes(definition.type)&&typeof delta[input.field]!=='string')throw Error('Valor de campo inválido.');
-   const normalized={...image.record,...RecordFields.normalize(delta)};
-   if(input.field==='signature'&&normalized.signature&&!next.signatures[normalized.signature])throw Error('La firma no está disponible.');
-   RecordFields.validateOptions(normalized,image.record);
-   if(input.field==='identifier')RecordFields.validateIdentifier(next,input.id,normalized);
-   image.record=normalized;image.revision=(image.revision||0)+1;image.updated=new Date().toISOString();image.fieldReviews={...(image.fieldReviews||{}),[input.field]:image.updated};
-   if(input.field==='author'&&normalized.author)next.authors=[...new Set([...(next.authors||[]),normalized.author])];
-   if(['people','objects','highlights'].includes(input.field))next.terms[input.field]=[...new Set([...(next.terms[input.field]||[]),...(normalized[input.field]||[])])];
+   patchField(next,input.id,input.revision,input.field,input.value);
    await commit(next);return {image:clone(current.images[input.id]),authors:clone(current.authors||[])};
+  }
+  if(action==='bulk_field'){
+   if(!RecordFields.bulkAllowed(input.field))throw Error('La edición global solo está disponible para campos con combo.');
+   if(!Array.isArray(input.targets)||!input.targets.length||input.targets.length>10000||new Set(input.targets.map(i=>i.id)).size!==input.targets.length)throw Error('Selección global inválida.');
+   const definition=RecordFields.definitions[input.field];
+   if(typeof input.value!=='string'||input.value&&definition.options&&!definition.options.includes(input.value))throw Error('Elegí un valor del listado.');
+   if(input.field==='author'&&input.value&&!(next.authors||[]).includes(input.value)&&!Object.values(next.images).some(i=>i.record?.author===input.value))throw Error('Elegí un autor de la colección.');
+   for(const target of input.targets){if(!next.images[target.id]||!RecordFields.applicable(next.images[target.id],input.field))throw Error('El campo no corresponde a una imagen seleccionada.');patchField(next,target.id,target.revision,input.field,input.value);}
+   await commit(next);return {images:input.targets.map(i=>clone(current.images[i.id])),authors:clone(current.authors||[])};
   }
   if(action==='add_signature'){
    const name=input.name.trim().replace(/\s+/g,' ');if(!name||name.length>200)throw Error('Escribí una firma de hasta 200 caracteres.');

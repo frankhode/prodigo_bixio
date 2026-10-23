@@ -4,7 +4,9 @@
       "Frente",
       "Reverso",
       "Tapa",
-      "Otros"
+      "Interior",
+      "Otros",
+      "Escaneo HD"
     ],
     "kind": [
       "Retrato",
@@ -12,13 +14,15 @@
     ],
     "portrait": [
       "Individual",
-      "Grupal"
+      "Grupal",
+      "Múltiple"
     ],
     "frame": [
       "Busto",
       "Medio cuerpo",
       "Tres cuartos",
-      "Cuerpo entero"
+      "Cuerpo entero",
+      "Mixto"
     ],
     "direction": [
       "Frente",
@@ -30,6 +34,13 @@
       "Estudio",
       "Interior",
       "Exterior"
+    ],
+    "color": [
+      "byn",
+      "col",
+      "sepia",
+      "iluminado",
+      "otros"
     ]
   },
   "terms": {

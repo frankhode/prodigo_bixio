@@ -3,7 +3,7 @@
 const RecordFields=(()=>{
  const definitions={
   identifier:{label:'Identificador único',type:'identifier'},author:{label:'Autor / fotógrafo',type:'author'},identifiedPeople:{label:'Personas identificadas',type:'names'},
-  displayOrder:{label:'Orden de visualización'},side:{label:'Parte del documento',options:[]},number:{label:'Número original'},date:{label:'Fecha'},
+  parent:{label:'Imagen vinculada',type:'link'},color:{label:'Color',options:[]},displayOrder:{label:'Orden de visualización'},side:{label:'Parte del documento',options:[]},number:{label:'Número original'},date:{label:'Fecha'},
   kind:{label:'Tipo de imagen',options:[]},portrait:{label:'Tipo de retrato',options:[],portraitOnly:true},
   frame:{label:'Encuadre',options:[],portraitOnly:true},direction:{label:'Orientación',options:[],portraitOnly:true},
   environment:{label:'Ambiente',options:[]},people:{label:'Personas: categorías',type:'tags'},objects:{label:'Objetos',type:'tags'},highlights:{label:'Destacados',type:'tags'},signature:{label:'Firma del estudio',type:'signature'},notes:{label:'Notas'}
@@ -11,7 +11,7 @@ const RecordFields=(()=>{
  let configured=false,terms={};
  function configure(source){
   const parsed={options:{},terms:{}};
-  for(const [section,keys] of Object.entries({options:['side','kind','portrait','frame','direction','environment'],terms:['people','objects','highlights']})){
+  for(const [section,keys] of Object.entries({options:['side','kind','portrait','frame','direction','environment','color'],terms:['people','objects','highlights']})){
    for(const key of keys){const list=source?.[section]?.[key];if(!Array.isArray(list)||list.some(v=>typeof v!=='string'||!v.trim()||v.length>300)||new Set(list.map(v=>v.trim())).size!==list.length)throw Error('options.json: lista inválida en '+section+'.'+key);parsed[section][key]=list.map(v=>v.trim());}
   }
   if(!parsed.options.side.length)throw Error('options.json: la lista side no puede estar vacía.');
@@ -30,7 +30,7 @@ const RecordFields=(()=>{
  const has=value=>Array.isArray(value)?value.some(v=>String(v).trim()):value!==undefined&&value!==null&&String(value).trim()!=='';
  const value=(image,key)=>image.record?.[key];
  const applicable=(image,key)=>!definitions[key]?.portraitOnly||image.record?.kind==='Retrato';
- function text(image,key,db){const v=value(image,key);if(!has(v))return 'Sin dato';if(key==='signature')return db.signatures?.[v]||v;return Array.isArray(v)?v.join(' · '):String(v);}
+ function text(image,key,db){const v=value(image,key);if(!has(v))return 'Sin dato';if(key==='parent')return db.images?.[v]?.relative||v;if(key==='signature')return db.signatures?.[v]||v;return Array.isArray(v)?v.join(' · '):String(v);}
  function stats(images,key){const list=images.filter(i=>applicable(i,key));return {total:list.length,filled:list.filter(i=>has(value(i,key))).length,reviewed:list.filter(i=>i.fieldReviews?.[key]).length};}
  function candidates(images,key,scope){return images.filter(i=>applicable(i,key)&&(scope==='all'||scope==='filled'&&has(value(i,key))||scope==='unreviewed'&&!i.fieldReviews?.[key]||scope==='missing'&&!has(value(i,key))&&!i.fieldReviews?.[key]));}
  function cleanNames(value){if(!Array.isArray(value))throw Error('Indicá un nombre por línea.');if(value.length>100)throw Error('Hay demasiados nombres en esta imagen.');return [...new Set(value.map(v=>{if(typeof v!=='string'||v.length>300)throw Error('Nombre de persona inválido.');return v.trim();}).filter(Boolean))];}
@@ -47,6 +47,7 @@ const RecordFields=(()=>{
   const ownRoot=root(id);if(!record.identifier)return;const key=record.identifier.toLocaleUpperCase();
   for(const other of Object.values(images))if(other.id!==id&&String(other.record?.identifier||'').trim().toLocaleUpperCase()===key&&root(other.id)!==ownRoot)throw Error('El identificador '+record.identifier+' ya pertenece a '+(other.record.number||other.relative)+'. Solo los archivos de una misma pieza vinculada pueden compartirlo.');
  }
- return {definitions,configure,loadOptions,validateOptions,get ready(){return configured;},get terms(){return terms;},has,value,applicable,text,stats,candidates,cleanNames,normalize,validateIdentifier};
+ const bulkAllowed=key=>!!definitions[key]?.options||['author','signature'].includes(key);
+ return {definitions,bulkAllowed,configure,loadOptions,validateOptions,get ready(){return configured;},get terms(){return terms;},has,value,applicable,text,stats,candidates,cleanNames,normalize,validateIdentifier};
 })();
 if(typeof module!=='undefined')module.exports=RecordFields;

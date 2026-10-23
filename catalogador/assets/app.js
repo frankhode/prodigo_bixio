@@ -34,7 +34,7 @@ function namesField(){
 }
 function renderSingleField(key){
  const definition=RecordFields.definitions[key];
- if(definition.type==='identifier')identifierFields();else if(definition.type==='author')authorField();else if(definition.type==='names')namesField();else if(definition.type==='signature')signatureFields();else if(definition.type==='tags')tags(key);else field(definition.label,key,definition.options);
+ if(definition.type==='link'){const input=field(definition.label,key,[]);for(const image of Object.values(db.images).filter(i=>i.id!==active.id))input.add(new Option((image.record.side||'Sin parte')+' · '+image.relative,image.id));input.value=record[key]||'';}else if(definition.type==='identifier')identifierFields();else if(definition.type==='author')authorField();else if(definition.type==='names')namesField();else if(definition.type==='signature')signatureFields();else if(definition.type==='tags')tags(key);else field(definition.label,key,definition.options);
 }
 function signatureFields(){
  const select=field('Firma del estudio','signature',[]);
@@ -74,11 +74,11 @@ if(step===1){
  for(const [label,key]of [['Tipo de retrato','portrait'],['Encuadre','frame'],['Orientación del rostro','direction']]){const input=field(label,key,RecordFields.definitions[key].options);portraitFields.append(input.parentElement);}
  const updatePortrait=()=>{portraitFields.hidden=record.kind!=='Retrato';};updatePortrait();
  kind.oninput=()=>{record.kind=kind.value;dirty=true;updatePortrait();};
- field('Ambiente','environment',RecordFields.definitions.environment.options);
+ field('Ambiente','environment',RecordFields.definitions.environment.options);field('Color','color',RecordFields.definitions.color.options);
 }
 if(step>=2&&step<=4){tags(['people','objects','highlights'][step-2]);if(step===2)namesField();}
 if(step===5)signatureFields();
-if(step===6){const dl=el('dl','');const labels={identifier:'Identificador único',author:'Autor / fotógrafo',identifiedPeople:'Personas identificadas',side:'Parte',number:'Número',date:'Fecha',kind:'Imagen',portrait:'Retrato',frame:'Encuadre',direction:'Orientación',environment:'Ambiente',people:'Personas',objects:'Objetos',highlights:'Destacados',signature:'Firma del estudio'};for(const[k,label]of Object.entries(labels)){let v=k==='signature'?((db.signatures||{})[record[k]]?(/^[A-Z]+-\d+$/.test(record[k]||'')?record[k]+' · ':'')+db.signatures[record[k]]:''):record[k];if(Array.isArray(v))v=v.join(', ');if(v){dl.append(el('dt',label),el('dd',v));}}$('#fields').append(dl);field('Notas','notes');}
+if(step===6){const dl=el('dl','');const labels={identifier:'Identificador único',author:'Autor / fotógrafo',identifiedPeople:'Personas identificadas',side:'Parte',number:'Número',date:'Fecha',kind:'Imagen',portrait:'Retrato',frame:'Encuadre',direction:'Orientación',environment:'Ambiente',color:'Color',displayOrder:'Orden de visualización',parent:'Imagen vinculada',people:'Personas',objects:'Objetos',highlights:'Destacados',signature:'Firma del estudio'};for(const[k,label]of Object.entries(labels)){let v=k==='signature'?((db.signatures||{})[record[k]]?(/^[A-Z]+-\d+$/.test(record[k]||'')?record[k]+' · ':'')+db.signatures[record[k]]:''):record[k];if(Array.isArray(v))v=v.join(', ');if(v){dl.append(el('dt',label),el('dd',v));}}$('#fields').append(dl);field('Notas','notes');}
 $('#back').textContent=step?'← Anterior':'Cancelar';$('#next').textContent=step===titles.length-1?'Guardar y siguiente imagen →':'Siguiente →';focusFirst();}
 function close(){if(busy){$('#save-error').textContent='Esperá a que termine el guardado.';return;}if(dirty&&!confirm('¿Cerrar sin guardar los cambios?'))return;$('#editor').close();}
 function back(){if(editingField){window.FieldDashboard.previous();return;}if(step){step--;show();}else close();}

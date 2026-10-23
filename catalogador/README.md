@@ -99,6 +99,7 @@ En GitHub: abrir el enlace, editar, guardar con **Commit changes** y recargar el
 | `options.frame` | Encuadre |
 | `options.direction` | Orientación |
 | `options.environment` | Ambiente |
+| `options.color` | Color: byn, col, sepia, iluminado, otros |
 | `terms.people` | Categorías de personas |
 | `terms.objects` | Objetos |
 | `terms.highlights` | Destacados |
@@ -110,3 +111,11 @@ Los cambios se aplican al recargar; GitHub puede tardar brevemente en propagarlo
 **Frente** determina las tarjetas públicas y **Retrato** habilita los campos de retrato: conservar esos textos mientras se use ese comportamiento. Las partes nuevas se muestran dentro de la ficha vinculada a un frente, con su orden de visualización.
 
 Autores, firmas, colecciones y carpetas ya se construyen desde datos JSON: los autores (`authors`), firmas (`signatures`) y términos incorporados (`terms`) están en `data/collections/<coleccion>.json`. El registro de colecciones está en `data/index.json`. No editar estos archivos mientras haya una sesión con cambios sin guardar; después de una edición manual, recargar la colección antes de seguir catalogando. Los combos de estado y alcance de revisión son controles del sistema, no vocabularios documentales.
+
+
+### Color y edición global por campo
+«Color» se carga en el paso Tipo de imagen y en Completar / revisar un campo. Las fichas anteriores quedan sin dato hasta que se completen; no se asigna un color automáticamente.
+
+El panel permite recorrer todos los campos de una ficha, incluida Imagen vinculada. Para una corrección masiva, elegir el campo, ajustar los filtros de carpeta/estado/búsqueda y el alcance (Vacíos sin revisar, Sin revisar, Con dato o Todas las imágenes). **Editar globalmente…** se ofrece para los combos de clasificación, color, autor y firma. Muestra la cantidad y una muestra del conjunto seleccionado; elegir un valor y pulsar **Aplicar a N imágenes**. El alcance se fija al abrir esa ventana y no se limita a las primeras 50 filas mostradas en el panel.
+
+El guardado global usa un único commit: modifica exclusivamente el campo elegido, marca ese campo revisado y conserva los demás datos, las vinculaciones, los medios y el estado de catalogación. Si una ficha cambió o el repositorio rechaza la escritura, no se aplica ninguna parte de la operación. Los subcampos de retrato solo incluyen imágenes clasificadas como Retrato. Los campos libres, identificadores y vínculos se revisan individualmente.

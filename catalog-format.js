@@ -21,7 +21,7 @@ const BixioFormat=(()=>{
    const r=i.record,tags=[],brands=[];
    const mark=rec=>{if(rec.signature){let key=rec.signature==='none'?'sin-marca':rec.signature==='unidentified'?'por-identificar':rec.signature;add('marca',key,(key.startsWith('BIX-')?key+' · ':'')+(source.signatures?.[rec.signature]||rec.signature));brands.push(key);}};
    for(const term of r.people||[])tags.push(add('personas','person-'+slug(term),term));
-   for(const key of ['kind','portrait','frame','direction'])if(r[key])tags.push(add('composicion',key+'-'+slug(r[key]),r[key]));
+   for(const key of ['kind','portrait','frame','direction','color'])if(r[key])tags.push(add('composicion',key+'-'+slug(r[key]),r[key]));
    if(r.environment)tags.push(add('ambiente','env-'+slug(r.environment),r.environment));
    for(const key of ['objects','highlights'])for(const term of r[key]||[])tags.push(add('detalles',key+'-'+slug(term),term));
    const reverse=related.find(x=>x.record.side==='Reverso');
