@@ -50,13 +50,30 @@ const GithubStore=(()=>{
   requireAuth();const next=clone(current);
   if(action==='save'){
    const image=next.images[input.id];if(!image)throw Error('Imagen inexistente.');if((image.revision||0)!==input.revision)throw Error('El registro cambió. Recargá la colección.');
-   const record=clone({...input.record});if(!['Frente','Reverso','Tapa','Otros'].includes(record.side))throw Error('Elegí la parte del documento.');
+   const record=RecordFields.normalize(clone({...input.record}));if(!['Frente','Reverso','Tapa','Otros'].includes(record.side))throw Error('Elegí la parte del documento.');
    if(record.parent&&(record.parent===image.id||!next.images[record.parent]))throw Error('Vínculo de frente inválido.');
    if(record.signature&&!next.signatures[record.signature])throw Error('La firma ya no está disponible.');
    if(record.kind!=='Retrato')for(const key of ['portrait','frame','direction'])record[key]='';
+   RecordFields.validateIdentifier(next,input.id,record);
+   if(record.author)next.authors=[...new Set([...(next.authors||[]),record.author])];
    image.record=record;image.status=input.complete?'done':'draft';image.revision=(image.revision||0)+1;image.updated=new Date().toISOString();
    for(const key of ['people','objects','highlights'])next.terms[key]=[...new Set([...(next.terms[key]||[]),...(record[key]||[])])];
    await commit(next);return {image:clone(current.images[input.id])};
+  }
+  if(action==='patch_field'){
+   const definition=RecordFields.definitions[input.field];if(!definition)throw Error('Campo de revisión inválido.');
+   const image=next.images[input.id];if(!image)throw Error('Imagen inexistente.');if((image.revision||0)!==input.revision)throw Error('El registro cambió. Recargá la colección.');
+   const delta={[input.field]:clone(input.value)};if(input.field==='identifier')delta.identifierType=input.identifierType||'Otro';
+   if(definition.type==='tags'&&(!Array.isArray(delta[input.field])||delta[input.field].some(v=>typeof v!=='string')))throw Error('Elegí términos válidos.');
+   if(!['tags','names'].includes(definition.type)&&typeof delta[input.field]!=='string')throw Error('Valor de campo inválido.');
+   const normalized={...image.record,...RecordFields.normalize(delta)};
+   if(input.field==='signature'&&normalized.signature&&!next.signatures[normalized.signature])throw Error('La firma no está disponible.');
+   if(definition.options&&normalized[input.field]&&!definition.options.includes(normalized[input.field]))throw Error('Elegí un valor del listado.');
+   if(input.field==='identifier')RecordFields.validateIdentifier(next,input.id,normalized);
+   image.record=normalized;image.revision=(image.revision||0)+1;image.updated=new Date().toISOString();image.fieldReviews={...(image.fieldReviews||{}),[input.field]:image.updated};
+   if(input.field==='author'&&normalized.author)next.authors=[...new Set([...(next.authors||[]),normalized.author])];
+   if(['people','objects','highlights'].includes(input.field))next.terms[input.field]=[...new Set([...(next.terms[input.field]||[]),...(normalized[input.field]||[])])];
+   await commit(next);return {image:clone(current.images[input.id]),authors:clone(current.authors||[])};
   }
   if(action==='add_signature'){
    const name=input.name.trim().replace(/\s+/g,' ');if(!name||name.length>200)throw Error('Escribí una firma de hasta 200 caracteres.');

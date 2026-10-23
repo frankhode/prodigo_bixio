@@ -50,3 +50,32 @@ El visor descarga miniaturas y abre la imagen grande al consultar una ficha. La 
 ## Validación
 
 `node tests/store.cjs` (desde la carpeta padre, donde el proyecto se llama `prodigo-catalogador`) prueba guardado atómico, protección de conflictos, colecciones independientes y el manejo del token mediante un servidor GitHub simulado. No usa credenciales ni modifica datos reales.
+
+## Autor, personas identificadas e identificador de la pieza
+
+- **Autor / fotógrafo**: combo por colección, con opción para agregar nombres. Una colección puede contener obras de distintos autores. Un autor nuevo se incorpora al repertorio al guardar la ficha o el campo.
+- **Personas identificadas**: nombres propios, uno por línea. Es independiente de las categorías Hombres/Mujeres/Niños/etc. Admite formas como `Apellido, Nombre`.
+- **Identificador único**: valor de texto para conservar ceros iniciales y prefijos; tipo Barcode Aleph, Inventario u Otro. Se distingue del número original que figura en la fotografía. Se comprueba que el identificador no esté asignado a piezas distintas de la misma colección; los archivos frente/reverso vinculados a una pieza pueden compartirlo.
+
+Las fichas anteriores conservan sus datos. Los campos nuevos se muestran vacíos hasta que se completen; no se infiere un autor a partir del nombre de la colección.
+
+## Completar / revisar un campo
+
+Abrir el panel **Completar / revisar un campo**, encima de la grilla. Sus cantidades y listas respetan la colección y los filtros actuales de carpeta, estado y búsqueda.
+
+Las tarjetas muestran cobertura de autor, personas identificadas e identificador. El selector **Campo** también permite recorrer los demás campos: fecha, número original, retrato, encuadre, categorías de personas, objetos, destacados, firma y notas. Para los campos exclusivos de retratos se consideran las fichas de tipo Retrato.
+
+Elegir qué revisar: **Vacíos sin revisar**, **Sin revisar (con o sin dato)**, **Con dato** o **Todas las imágenes**. La lista presenta el valor actual junto a una miniatura. Pulsar una fila para empezar allí, o **Empezar recorrido** para comenzar por la primera. Se muestran hasta 50 filas; el recorrido incluye todas las coincidencias.
+
+Durante el recorrido se muestra la imagen y únicamente el campo elegido:
+
+- **Guardar y siguiente imagen** (o Enter/Ctrl+Enter): guarda ese campo, lo marca como revisado y avanza.
+- **Guardar y cerrar**: guarda ese campo y termina la sesión.
+- **Saltar imagen**: avanza sin guardar ni marcar revisado.
+- **Imagen anterior**: vuelve a la anterior. Solicita confirmación si hay un cambio sin guardar.
+
+Se puede guardar un campo vacío como revisado si el dato no está disponible; así deja de aparecer entre los vacíos sin revisar. Para volver a recorrerlo, elegir Todas las imágenes o Con dato, según corresponda. Los nombres propios se escriben uno por línea, por lo que Enter agrega una línea en ese campo; Ctrl+Enter guarda y avanza.
+
+El guardado puntual conserva todos los demás campos, las vistas y el estado de la ficha: no convierte automáticamente un borrador en catalogado ni reabre una ficha completa. Cada operación conserva el control de revisiones y se registra en GitHub. Las marcas de revisión se almacenan en `fieldReviews`, fuera de los datos descriptivos de la imagen. El panel se genera desde las definiciones de `assets/record-fields.js`, donde pueden incorporarse futuros campos.
+
+El visor público muestra autor, identificador y personas identificadas, y ofrece filtros por autor y por nombres cuando hay datos.
