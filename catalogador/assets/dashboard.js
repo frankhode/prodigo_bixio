@@ -34,7 +34,7 @@ window.FieldDashboard=(()=>{
   if(!session||busy)return;busy=true;for(const id of ['next','draft','back','skip-field'])if($('#'+id))$('#'+id).disabled=true;
   const key=session.field;
   try{
-   const result=await api('patch_field',{id:active.id,revision:active.revision||0,field:key,value:record[key]??(['names','tags'].includes(RecordFields.definitions[key].type)?[]:''),...(key==='identifier'?{identifierType:record.identifierType||'Otro'}:{})});
+   const result=await api('patch_field',{id:active.id,revision:active.revision||0,field:key,value:record[key]??(['names','tags'].includes(RecordFields.definitions[key].type)?[]:'')});
    db.images[active.id]=result.image;db.authors=result.authors;
    if(RecordFields.definitions[key].type==='tags')db.terms[key]=[...new Set([...(db.terms[key]||[]),...(result.image.record[key]||[])])];
    session.saved++;dirty=false;active=result.image;record=recordForEditing(active.record);render();

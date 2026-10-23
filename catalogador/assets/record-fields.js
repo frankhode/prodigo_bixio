@@ -11,17 +11,15 @@ const RecordFields=(()=>{
  const has=value=>Array.isArray(value)?value.some(v=>String(v).trim()):value!==undefined&&value!==null&&String(value).trim()!=='';
  const value=(image,key)=>image.record?.[key];
  const applicable=(image,key)=>!definitions[key]?.portraitOnly||image.record?.kind==='Retrato';
- function text(image,key,db){const v=value(image,key);if(!has(v))return 'Sin dato';if(key==='signature')return db.signatures?.[v]||v;if(key==='identifier')return (image.record.identifierType?image.record.identifierType+' · ':'')+v;return Array.isArray(v)?v.join(' · '):String(v);}
+ function text(image,key,db){const v=value(image,key);if(!has(v))return 'Sin dato';if(key==='signature')return db.signatures?.[v]||v;return Array.isArray(v)?v.join(' · '):String(v);}
  function stats(images,key){const list=images.filter(i=>applicable(i,key));return {total:list.length,filled:list.filter(i=>has(value(i,key))).length,reviewed:list.filter(i=>i.fieldReviews?.[key]).length};}
  function candidates(images,key,scope){return images.filter(i=>applicable(i,key)&&(scope==='all'||scope==='filled'&&has(value(i,key))||scope==='unreviewed'&&!i.fieldReviews?.[key]||scope==='missing'&&!has(value(i,key))&&!i.fieldReviews?.[key]));}
  function cleanNames(value){if(!Array.isArray(value))throw Error('Indicá un nombre por línea.');if(value.length>100)throw Error('Hay demasiados nombres en esta imagen.');return [...new Set(value.map(v=>{if(typeof v!=='string'||v.length>300)throw Error('Nombre de persona inválido.');return v.trim();}).filter(Boolean))];}
  function normalize(record){
   const next={...record};
-  for(const key of ['identifier','identifierType','author'])if(key in next){if(typeof next[key]!=='string'||next[key].length>300)throw Error('Valor inválido para '+definitions[key]?.label+'.');next[key]=next[key].trim();}
+  for(const key of ['identifier','author'])if(key in next){if(typeof next[key]!=='string'||next[key].length>300)throw Error('Valor inválido para '+definitions[key]?.label+'.');next[key]=next[key].trim();}
   if('displayOrder' in next){if(next.displayOrder==='')next.displayOrder='';else {const n=Number(next.displayOrder);if(!Number.isInteger(n)||n<1||n>9999)throw Error('El orden debe ser un número entre 1 y 9999.');next.displayOrder=n;}}
   if('identifiedPeople'in next)next.identifiedPeople=cleanNames(next.identifiedPeople);
-  if(next.identifier&&!next.identifierType)next.identifierType='Otro';
-  if(next.identifierType&&!['Barcode Aleph','Inventario','Otro'].includes(next.identifierType))throw Error('Tipo de identificador inválido.');
   return next;
  }
  function validateIdentifier(db,id,record){

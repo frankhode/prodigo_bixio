@@ -63,7 +63,7 @@ const GithubStore=(()=>{
   if(action==='patch_field'){
    const definition=RecordFields.definitions[input.field];if(!definition)throw Error('Campo de revisión inválido.');
    const image=next.images[input.id];if(!image)throw Error('Imagen inexistente.');if((image.revision||0)!==input.revision)throw Error('El registro cambió. Recargá la colección.');
-   const delta={[input.field]:clone(input.value)};if(input.field==='identifier')delta.identifierType=input.identifierType||'Otro';
+   const delta={[input.field]:clone(input.value)};
    if(definition.type==='tags'&&(!Array.isArray(delta[input.field])||delta[input.field].some(v=>typeof v!=='string')))throw Error('Elegí términos válidos.');
    if(!['tags','names'].includes(definition.type)&&typeof delta[input.field]!=='string')throw Error('Valor de campo inválido.');
    const normalized={...image.record,...RecordFields.normalize(delta)};
