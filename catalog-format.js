@@ -8,7 +8,7 @@ const BixioFormat=(()=>{
   const all=Object.entries(source.images).map(([id,i])=>({...i,id,record:i.record&&!Array.isArray(i.record)?i.record:{}}));
   const included=all.filter(i=>i.status==='done');
   if(!included.length)throw Error('Este archivo todavía no contiene imágenes catalogadas. Guardá al menos una ficha como completa.');
-  const ids=new Set(included.map(i=>i.id)),facets={personas:[],composicion:[],ambiente:[],detalles:[],marca:[],autores:[],identificados:[]};
+  const ids=new Set(included.map(i=>i.id)),facets={personas:[],tipo:[],retrato:[],encuadre:[],orientacion:[],color:[],objetos:[],destacados:[],composicion:[],ambiente:[],detalles:[],marca:[],autores:[],identificados:[]};
   const add=(group,key,text)=>{if(!facets[group].some(x=>x[0]===key))facets[group].push([key,text]);return key;};
   const byId=new Map(included.map(i=>[i.id,i]));
   // Componentes conectados: conserva cadenas incluso si una parte intermedia es borrador.
@@ -20,10 +20,12 @@ const BixioFormat=(()=>{
    const related=members(i.id).sort((a,b)=>rank(a)-rank(b)||a.relative.localeCompare(b.relative,'es',{numeric:true}));
    const r=i.record,tags=[],brands=[];
    const mark=rec=>{if(rec.signature){let key=rec.signature==='none'?'sin-marca':rec.signature==='unidentified'?'por-identificar':rec.signature;add('marca',key,(key.startsWith('BIX-')?key+' · ':'')+(source.signatures?.[rec.signature]||rec.signature));brands.push(key);}};
-   for(const term of r.people||[])tags.push(add('personas','person-'+slug(term),term));
-   for(const key of ['kind','portrait','frame','direction','color'])if(r[key])tags.push(add('composicion',key+'-'+slug(r[key]),r[key]));
-   if(r.environment)tags.push(add('ambiente','env-'+slug(r.environment),r.environment));
-   for(const key of ['objects','highlights'])for(const term of r[key]||[])tags.push(add('detalles',key+'-'+slug(term),term));
+   for(const {record:rec} of related){
+    for(const term of rec.people||[])tags.push(add('personas','person-'+slug(term),term));
+    for(const [key,group]of Object.entries({kind:'tipo',portrait:'retrato',frame:'encuadre',direction:'orientacion',color:'color'}))if(rec[key])tags.push(add(group,key+'-'+slug(rec[key]),rec[key]));
+    if(rec.environment)tags.push(add('ambiente','env-'+slug(rec.environment),rec.environment));
+    for(const [key,group]of Object.entries({objects:'objetos',highlights:'destacados'}))for(const term of rec[key]||[])tags.push(add(group,key+'-'+slug(term),term));
+   }
    const reverse=related.find(x=>x.record.side==='Reverso');
    for(const image of related){mark(image.record);if(image.record.author)tags.push(add('autores','author-'+slug(image.record.author),image.record.author));for(const term of image.record.identifiedPeople||[])tags.push(add('identificados','name-'+slug(term),term));}
    const authors=[...new Set(related.map(x=>x.record.author).filter(Boolean))],names=[...new Set(related.flatMap(x=>x.record.identifiedPeople||[]))];
