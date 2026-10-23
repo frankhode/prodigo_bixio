@@ -3,6 +3,16 @@ window.FieldDashboard=(()=>{
  let session=null,bulk=null,selectionKey='';const selected=new Set(),checks=new Map();
  const selector=$('#review-field'),scope=$('#review-scope');
  for(const [key,definition]of Object.entries(RecordFields.definitions))selector.add(new Option(definition.label,key));selector.value='author';
+ const viewKey='prodigo-review-grid-view';let view={imagesOnly:false,columns:'auto'};
+ try{const saved=JSON.parse(localStorage.getItem(viewKey));if(saved&&typeof saved.imagesOnly==='boolean')view.imagesOnly=saved.imagesOnly;if(saved&&(saved.columns==='auto'||Number.isInteger(Number(saved.columns))&&Number(saved.columns)>=2&&Number(saved.columns)<=12))view.columns=String(saved.columns);}catch(e){}
+ function applyView(persist=false){
+  const grid=$('#review-list');grid.classList.toggle('images-only',view.imagesOnly);grid.style.gridTemplateColumns=view.columns==='auto'?'':'repeat('+view.columns+', minmax(0, 1fr))';
+  $('#review-images-only').checked=view.imagesOnly;$('#review-columns').value=view.columns;
+  if(persist)try{localStorage.setItem(viewKey,JSON.stringify(view));}catch(e){}
+ }
+ $('#review-images-only').onchange=()=>{view.imagesOnly=$('#review-images-only').checked;applyView(true);};
+ $('#review-columns').onchange=()=>{const value=$('#review-columns').value;if(value==='auto'||Number.isInteger(Number(value))&&Number(value)>=2&&Number(value)<=12){view.columns=value;applyView(true);}};
+ applyView();
  const items=()=>db?RecordFields.candidates(images(),selector.value,scope.value).filter(i=>!$('#review-side').value||i.record.side===$('#review-side').value):[];
  function updateSelection(){
   const list=items(),count=list.filter(i=>selected.has(i.id)).length;
@@ -27,7 +37,7 @@ window.FieldDashboard=(()=>{
    if(image.media?.thumb){const thumb=new Image();thumb.src=GithubStore.url(image.media.thumb);thumb.alt=image.relative;thumb.loading='lazy';label.append(thumb);}else{const placeholder=el('span','Sin vista');placeholder.className='review-no-image';label.append(placeholder);}
    label.append(el('strong',image.record.identifier||image.record.number||image.relative),el('small',image.relative+' · '+(image.record.side||'Sin parte')),el('span',RecordFields.text(image,selector.value,db)));
    checkbox.onchange=()=>{if(!busy){if(checkbox.checked)selected.add(image.id);else selected.delete(image.id);}updateSelection();};
-   const preview=el('button','Revisar imagen');preview.type='button';preview.className='review-preview';preview.onclick=()=>start(image.id);
+   const preview=el('button','Revisar imagen');preview.type='button';preview.className='review-preview';preview.setAttribute('aria-label','Revisar '+image.relative);preview.title='Revisar '+image.relative;preview.onclick=()=>start(image.id);
    card.append(label,preview);checks.set(image.id,{checkbox,card});$('#review-list').append(card);
   }
   if(!list.length)$('#review-list').append(el('p','No hay imágenes para este campo y filtro.'));

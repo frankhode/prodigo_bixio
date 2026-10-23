@@ -129,3 +129,7 @@ Usar **Seleccionar todas las visibles**, **Quitar selección** o **Invertir sele
 Ejemplo: elegir Color y Vacíos sin revisar, filtrar Parte a Frente si corresponde, marcar solo las fotografías sepia y pulsar Editar seleccionadas… → sepia → Aplicar a N imágenes. Los reversos sin marcar conservan su valor vacío. El botón global se habilita únicamente con imágenes marcadas. Después de guardar se limpia la selección aplicada; las restantes fichas quedan intactas.
 
 **Empezar recorrido** recorre las imágenes marcadas cuando hay selección; si no hay ninguna, recorre todas las visibles. **Revisar imagen** abre únicamente la tarjeta elegida.
+
+
+### Tamaño y contenido de la grilla
+En el panel de revisión, activar **Solo imágenes** para ocultar textos y datos de las tarjetas. Las casillas de selección se mantienen disponibles y el acceso de revisión aparece al pasar el mouse o enfocar la tarjeta; en pantallas táctiles permanece visible. **Columnas** permite elegir de 2 a 12 imágenes por fila o ajuste automático. Las miniaturas se adaptan al ancho y se muestran completas, sin recortar. Estos cambios no alteran la selección ni los datos. La preferencia se recuerda en este navegador; si el almacenamiento local no está disponible, los controles siguen funcionando durante la sesión.
