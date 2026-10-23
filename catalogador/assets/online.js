@@ -57,4 +57,4 @@ $('#json-file').onchange=async e=>{const file=e.target.files[0];e.target.value='
  for(const key of ['people','objects','highlights'])next.terms[key]=[...new Set([...(next.terms[key]||[]),...(source.terms?.[key]||[])])];
  await GithubStore.commit(next);await load();await collections();setNotice(`${added} fichas recuperadas. Ahora elegí Leer carpeta de imágenes para generar y publicar sus vistas.`);
  }catch(error){setNotice(error.message);}finally{lock(false);}};
-(async()=>{lock(true);try{await GithubStore.open('bixio');await collections();await load();setNotice('Elegí una colección. Conectá GitHub para guardar cambios.');}catch(e){setNotice(e.message);}finally{lock(false);}})();
+(async()=>{lock(true);try{await RecordFields.loadOptions();await GithubStore.open('bixio');await collections();await load();setNotice('Elegí una colección. Conectá GitHub para guardar cambios.');}catch(e){setNotice(e.message);}finally{lock(!RecordFields.ready);}})();

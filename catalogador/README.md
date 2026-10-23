@@ -84,3 +84,29 @@ El visor público muestra autor, identificador y personas identificadas, y ofrec
 En el paso Identificación se puede vincular cualquier imagen con otra de la misma pieza, incluso formando cadenas (tapa → otros → frente → reverso). No se admiten ciclos. Las vinculaciones anteriores siguen funcionando.
 
 Cada imagen tiene un «Orden de visualización», también disponible en Completar / revisar un campo. Usar 1, 2, 3… para fijar la secuencia; sin orden explícito se usa frente, reverso, tapa, otros y nombre de archivo para desempatar. El visor muestra una tarjeta por frente completo. Las partes sin un frente vinculado no generan tarjetas. Dentro de la ficha solo se publican las imágenes completas; autor y personas identificadas se reúnen de todas sus partes para filtros y detalle.
+
+
+### Editar las listas de catalogación
+El archivo **[options.json](https://github.com/frankhode/prodigo-catalogador/edit/main/options.json)** es la fuente única de las listas fijas, tanto para la ficha como para el panel de revisión y la validación del guardado. Se lee siempre desde `prodigo-catalogador`, incluso al usar la copia del catalogador alojada en `prodigo_bixio/catalogador/`.
+
+En GitHub: abrir el enlace, editar, guardar con **Commit changes** y recargar el catalogador. Mantener las claves; agregar, quitar o reordenar los textos dentro de cada lista. JSON requiere comillas dobles y comas entre elementos, sin coma después del último.
+
+| Clave | Lista |
+| --- | --- |
+| `options.side` | Parte del documento |
+| `options.kind` | Tipo de imagen |
+| `options.portrait` | Tipo de retrato |
+| `options.frame` | Encuadre |
+| `options.direction` | Orientación |
+| `options.environment` | Ambiente |
+| `terms.people` | Categorías de personas |
+| `terms.objects` | Objetos |
+| `terms.highlights` | Destacados |
+
+Ejemplo: `"side": ["Frente", "Reverso", "Tapa", "Interior", "Otros"]`.
+
+Los cambios se aplican al recargar; GitHub puede tardar brevemente en propagarlos. Una configuración inválida muestra un error y bloquea la carga para evitar trabajar con listas inconsistentes. Los valores quitados se conservan en las fichas anteriores y se muestran como «valor anterior»: no se borran ni se renombran automáticamente. Los términos ya agregados a una colección también se conservan en `terms` de su JSON.
+
+**Frente** determina las tarjetas públicas y **Retrato** habilita los campos de retrato: conservar esos textos mientras se use ese comportamiento. Las partes nuevas se muestran dentro de la ficha vinculada a un frente, con su orden de visualización.
+
+Autores, firmas, colecciones y carpetas ya se construyen desde datos JSON: los autores (`authors`), firmas (`signatures`) y términos incorporados (`terms`) están en `data/collections/<coleccion>.json`. El registro de colecciones está en `data/index.json`. No editar estos archivos mientras haya una sesión con cambios sin guardar; después de una edición manual, recargar la colección antes de seguir catalogando. Los combos de estado y alcance de revisión son controles del sistema, no vocabularios documentales.

@@ -1,0 +1,61 @@
+{
+  "options": {
+    "side": [
+      "Frente",
+      "Reverso",
+      "Tapa",
+      "Otros"
+    ],
+    "kind": [
+      "Retrato",
+      "Otros"
+    ],
+    "portrait": [
+      "Individual",
+      "Grupal"
+    ],
+    "frame": [
+      "Busto",
+      "Medio cuerpo",
+      "Tres cuartos",
+      "Cuerpo entero"
+    ],
+    "direction": [
+      "Frente",
+      "Perfil",
+      "Tres cuartos",
+      "Mixta"
+    ],
+    "environment": [
+      "Estudio",
+      "Interior",
+      "Exterior"
+    ]
+  },
+  "terms": {
+    "people": [
+      "Hombres",
+      "Mujeres",
+      "Niños",
+      "Niñas",
+      "Bebés"
+    ],
+    "objects": [
+      "Pelotas",
+      "Juguetes",
+      "Flores",
+      "Libros",
+      "Instrumentos musicales",
+      "Muebles",
+      "Accesorios"
+    ],
+    "highlights": [
+      "Sombrero",
+      "Vestimenta",
+      "Accesorios",
+      "Peinado",
+      "Calzado",
+      "Joyas"
+    ]
+  }
+}

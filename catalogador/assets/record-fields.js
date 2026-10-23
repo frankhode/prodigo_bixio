@@ -3,11 +3,30 @@
 const RecordFields=(()=>{
  const definitions={
   identifier:{label:'Identificador único',type:'identifier'},author:{label:'Autor / fotógrafo',type:'author'},identifiedPeople:{label:'Personas identificadas',type:'names'},
-  displayOrder:{label:'Orden de visualización'},side:{label:'Parte del documento',options:['Frente','Reverso','Tapa','Otros']},number:{label:'Número original'},date:{label:'Fecha'},
-  kind:{label:'Tipo de imagen',options:['Retrato','Otros']},portrait:{label:'Tipo de retrato',options:['Individual','Grupal'],portraitOnly:true},
-  frame:{label:'Encuadre',options:['Busto','Medio cuerpo','Tres cuartos','Cuerpo entero'],portraitOnly:true},direction:{label:'Orientación',options:['Frente','Perfil','Tres cuartos','Mixta'],portraitOnly:true},
-  environment:{label:'Ambiente',options:['Estudio','Interior','Exterior']},people:{label:'Personas: categorías',type:'tags'},objects:{label:'Objetos',type:'tags'},highlights:{label:'Destacados',type:'tags'},signature:{label:'Firma del estudio',type:'signature'},notes:{label:'Notas'}
+  displayOrder:{label:'Orden de visualización'},side:{label:'Parte del documento',options:[]},number:{label:'Número original'},date:{label:'Fecha'},
+  kind:{label:'Tipo de imagen',options:[]},portrait:{label:'Tipo de retrato',options:[],portraitOnly:true},
+  frame:{label:'Encuadre',options:[],portraitOnly:true},direction:{label:'Orientación',options:[],portraitOnly:true},
+  environment:{label:'Ambiente',options:[]},people:{label:'Personas: categorías',type:'tags'},objects:{label:'Objetos',type:'tags'},highlights:{label:'Destacados',type:'tags'},signature:{label:'Firma del estudio',type:'signature'},notes:{label:'Notas'}
  };
+ let configured=false,terms={};
+ function configure(source){
+  const parsed={options:{},terms:{}};
+  for(const [section,keys] of Object.entries({options:['side','kind','portrait','frame','direction','environment'],terms:['people','objects','highlights']})){
+   for(const key of keys){const list=source?.[section]?.[key];if(!Array.isArray(list)||list.some(v=>typeof v!=='string'||!v.trim()||v.length>300)||new Set(list.map(v=>v.trim())).size!==list.length)throw Error('options.json: lista inválida en '+section+'.'+key);parsed[section][key]=list.map(v=>v.trim());}
+  }
+  if(!parsed.options.side.length)throw Error('options.json: la lista side no puede estar vacía.');
+  for(const [key,list]of Object.entries(parsed.options))definitions[key].options=list;
+  terms=parsed.terms;configured=true;
+ }
+ async function loadOptions(){
+  try{const response=await fetch('https://raw.githubusercontent.com/frankhode/prodigo-catalogador/main/options.json?v='+Date.now(),{cache:'no-store'});if(!response.ok)throw Error('archivo no disponible');configure(await response.json());}
+  catch(error){configured=false;throw Error('No se pudo cargar options.json. '+error.message+' Corregí el archivo y recargá la página.');}
+ }
+ function validateOptions(record,previous={}){
+  if(!configured)throw Error('Primero debe cargarse options.json.');
+  for(const [key,definition] of Object.entries(definitions))if(definition.options&&record[key]&&!definition.options.includes(record[key])&&record[key]!==previous[key])throw Error('Elegí un valor del listado de '+definition.label+'.');
+ }
+ if(typeof module!=='undefined'&&module.exports)configure(require('../options.json'));
  const has=value=>Array.isArray(value)?value.some(v=>String(v).trim()):value!==undefined&&value!==null&&String(value).trim()!=='';
  const value=(image,key)=>image.record?.[key];
  const applicable=(image,key)=>!definitions[key]?.portraitOnly||image.record?.kind==='Retrato';
@@ -28,6 +47,6 @@ const RecordFields=(()=>{
   const ownRoot=root(id);if(!record.identifier)return;const key=record.identifier.toLocaleUpperCase();
   for(const other of Object.values(images))if(other.id!==id&&String(other.record?.identifier||'').trim().toLocaleUpperCase()===key&&root(other.id)!==ownRoot)throw Error('El identificador '+record.identifier+' ya pertenece a '+(other.record.number||other.relative)+'. Solo los archivos de una misma pieza vinculada pueden compartirlo.');
  }
- return {definitions,has,value,applicable,text,stats,candidates,cleanNames,normalize,validateIdentifier};
+ return {definitions,configure,loadOptions,validateOptions,get ready(){return configured;},get terms(){return terms;},has,value,applicable,text,stats,candidates,cleanNames,normalize,validateIdentifier};
 })();
 if(typeof module!=='undefined')module.exports=RecordFields;
