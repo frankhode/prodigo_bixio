@@ -1,30 +1,54 @@
 'use strict';
 window.FieldDashboard=(()=>{
- let session=null,bulk=null;
+ let session=null,bulk=null,selectionKey='';const selected=new Set(),checks=new Map();
  const selector=$('#review-field'),scope=$('#review-scope');
  for(const [key,definition]of Object.entries(RecordFields.definitions))selector.add(new Option(definition.label,key));selector.value='author';
- const items=()=>db?RecordFields.candidates(images(),selector.value,scope.value):[];
- function render(){
-  if(!db)return;const selection=images();$('#dashboard-summary').textContent=`${selection.length} imágenes en la selección actual`;
-  const cards=$('#field-stats');cards.replaceChildren();for(const key of ['color','author','identifiedPeople','identifier']){const count=RecordFields.stats(selection,key),button=el('button','');button.type='button';button.className='field-stat';button.append(el('strong',RecordFields.definitions[key].label),el('span',`${count.filled} / ${count.total} con dato`),el('small',`${count.total-count.filled} vacíos · ${count.reviewed} revisados`));button.onclick=()=>{selector.value=key;$('#dashboard-panel').open=true;render();};cards.append(button);}
-  const list=items();$('#bulk-open').hidden=!RecordFields.bulkAllowed(selector.value);$('#bulk-open').disabled=!list.length||busy;$('#review-count').textContent=`${list.length} imágenes para ${RecordFields.definitions[selector.value].label.toLowerCase()}`;$('#review-list').replaceChildren();
-  for(const image of list.slice(0,50)){const row=el('button','');row.type='button';row.className='review-row';if(image.media?.thumb){const thumb=new Image();thumb.src=GithubStore.url(image.media.thumb);thumb.alt='';thumb.loading='lazy';row.append(thumb);}const text=el('span','');text.append(el('strong',image.record.identifier||image.record.number||image.relative),el('span',RecordFields.text(image,selector.value,db)),el('small',image.fieldReviews?.[selector.value]?'Revisado':'Sin revisar'));row.append(text);row.onclick=()=>start(image.id);$('#review-list').append(row);}
-  if(list.length>50)$('#review-list').append(el('p','Se muestran las primeras 50. El recorrido incluye todas las imágenes de esta selección.'));
-  if(!list.length)$('#review-list').append(el('p','No hay imágenes para este campo y filtro.'));
+ const items=()=>db?RecordFields.candidates(images(),selector.value,scope.value).filter(i=>!$('#review-side').value||i.record.side===$('#review-side').value):[];
+ function updateSelection(){
+  const list=items(),count=list.filter(i=>selected.has(i.id)).length;
+  for(const [id,{checkbox,card}]of checks){checkbox.checked=selected.has(id);checkbox.disabled=busy;card.classList.toggle('selected',checkbox.checked);}
+  $('#selection-count').textContent=count+' de '+list.length+' seleccionadas';
+  $('#bulk-open').disabled=!count||busy;$('#start-review').disabled=!list.length||busy;
+  $('#start-review').textContent=count?'Recorrer '+count+' seleccionadas →':'Empezar recorrido →';
+  for(const id of ['select-all','select-none','select-invert'])$('#'+id).disabled=!list.length||busy;
  }
+ function render(){
+  if(!db)return;
+  const key=GithubStore.id+'|'+selector.value;if(key!==selectionKey){selected.clear();selectionKey=key;}
+  const selection=images(),part=$('#review-side'),partValue=part.value;
+  part.replaceChildren(new Option('Todas las partes',''));for(const value of [...new Set([...RecordFields.definitions.side.options,...selection.map(i=>i.record.side).filter(Boolean)])])part.add(new Option(value,value));part.value=partValue;
+  $('#dashboard-summary').textContent=`${selection.length} imágenes en los filtros actuales`;
+  const cards=$('#field-stats');cards.replaceChildren();for(const key of ['color','author','identifiedPeople','identifier']){const count=RecordFields.stats(selection,key),button=el('button','');button.type='button';button.className='field-stat';button.append(el('strong',RecordFields.definitions[key].label),el('span',`${count.filled} / ${count.total} con dato`),el('small',`${count.total-count.filled} vacíos · ${count.reviewed} revisados`));button.onclick=()=>{selector.value=key;$('#dashboard-panel').open=true;render();};cards.append(button);}
+  const list=items(),visible=new Set(list.map(i=>i.id));for(const id of selected)if(!visible.has(id))selected.delete(id);
+  $('#bulk-open').hidden=!RecordFields.bulkAllowed(selector.value);$('#review-count').textContent=`${list.length} imágenes para ${RecordFields.definitions[selector.value].label.toLowerCase()}`;$('#review-list').replaceChildren();checks.clear();
+  for(const image of list){
+   const card=el('article','');card.className='review-tile';
+   const label=el('label','');label.className='review-pick';const checkbox=el('input','');checkbox.type='checkbox';checkbox.setAttribute('aria-label','Seleccionar '+image.relative);label.append(checkbox);
+   if(image.media?.thumb){const thumb=new Image();thumb.src=GithubStore.url(image.media.thumb);thumb.alt=image.relative;thumb.loading='lazy';label.append(thumb);}else{const placeholder=el('span','Sin vista');placeholder.className='review-no-image';label.append(placeholder);}
+   label.append(el('strong',image.record.identifier||image.record.number||image.relative),el('small',image.relative+' · '+(image.record.side||'Sin parte')),el('span',RecordFields.text(image,selector.value,db)));
+   checkbox.onchange=()=>{if(!busy){if(checkbox.checked)selected.add(image.id);else selected.delete(image.id);}updateSelection();};
+   const preview=el('button','Revisar imagen');preview.type='button';preview.className='review-preview';preview.onclick=()=>start(image.id);
+   card.append(label,preview);checks.set(image.id,{checkbox,card});$('#review-list').append(card);
+  }
+  if(!list.length)$('#review-list').append(el('p','No hay imágenes para este campo y filtro.'));
+  updateSelection();
+ }
+ $('#select-all').onclick=()=>{if(busy)return;for(const image of items())selected.add(image.id);updateSelection();};
+ $('#select-none').onclick=()=>{if(busy)return;selected.clear();updateSelection();};
+ $('#select-invert').onclick=()=>{if(busy)return;for(const image of items()){if(selected.has(image.id))selected.delete(image.id);else selected.add(image.id);}updateSelection();};
+ $('#review-side').onchange=render;
  function openBulk(){
   if(typeof guarded==='function'&&!guarded())return;if(busy)return;
   if(!GithubStore.connected){$('#connection-error').textContent='Conectá GitHub para editar globalmente.';$('#connection').showModal();return;}
-  const field=selector.value,list=items();if(!list.length||!RecordFields.bulkAllowed(field))return;
+  const field=selector.value,list=items().filter(i=>selected.has(i.id));if(!list.length||!RecordFields.bulkAllowed(field))return;
   bulk={field,targets:list.map(i=>({id:i.id,revision:i.revision||0}))};
   $('#bulk-title').textContent='Edición global · '+RecordFields.definitions[field].label;
-  $('#bulk-summary').textContent=list.length+' imágenes del campo y los filtros actuales. Se conserva el estado de catalogación.';
+  $('#bulk-summary').textContent=list.length+' imágenes seleccionadas. Solo se modifica este conjunto; las demás se conservan.';
   const select=$('#bulk-value');select.replaceChildren(new Option('Elegí el nuevo valor…','__choose__'),new Option('Dejar vacío',''));
   if(field==='signature')for(const [value,label]of Object.entries(db.signatures||{}))select.add(new Option(label,value));
   else for(const value of field==='author'?[...new Set([...(db.authors||[]),...Object.values(db.images).map(i=>i.record?.author).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'es')):RecordFields.definitions[field].options)select.add(new Option(value,value));
   select.value='__choose__';$('#bulk-preview').textContent='';$('#bulk-error').textContent='';$('#bulk-apply').disabled=true;$('#bulk-list').replaceChildren();
-  for(const image of list.slice(0,20))$('#bulk-list').append(el('p',image.relative+' · '+RecordFields.text(image,field,db)));
-  if(list.length>20)$('#bulk-list').append(el('p','… y '+(list.length-20)+' imágenes más.'));
+  for(const image of list){const row=el('div','');row.className='bulk-selected-image';if(image.media?.thumb){const thumb=new Image();thumb.src=GithubStore.url(image.media.thumb);thumb.alt='';thumb.loading='lazy';row.append(thumb);}row.append(el('span',image.relative+' · '+RecordFields.text(image,field,db)));$('#bulk-list').append(row);}
   $('#bulk-dialog').showModal();
  }
  $('#bulk-value').onchange=()=>{if(!bulk)return;const value=$('#bulk-value').value;$('#bulk-apply').disabled=value==='__choose__';$('#bulk-preview').textContent=value==='__choose__'?'':bulk.targets.length+' imágenes → '+(value===''?'Sin dato':bulk.field==='signature'?db.signatures[value]:value)+'. Se reemplaza el valor actual del campo y se marca como revisado.';$('#bulk-apply').textContent='Aplicar a '+bulk.targets.length+' imágenes';};
@@ -33,14 +57,14 @@ window.FieldDashboard=(()=>{
  $('#bulk-dialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
  $('#bulk-apply').onclick=async()=>{
   if(!bulk||busy||$('#bulk-value').value==='__choose__')return;const operation=bulk,value=$('#bulk-value').value;busy=true;for(const id of ['bulk-apply','bulk-cancel','bulk-value'])$('#'+id).disabled=true;
-  try{const result=await api('bulk_field',{...operation,value});for(const image of result.images)db.images[image.id]=image;db.authors=result.authors;$('#bulk-dialog').close();bulk=null;render();$('#notice').textContent=operation.targets.length+' imágenes actualizadas en '+RecordFields.definitions[operation.field].label+'.';}
+  try{const result=await api('bulk_field',{...operation,value});for(const image of result.images)db.images[image.id]=image;db.authors=result.authors;$('#bulk-dialog').close();bulk=null;for(const target of operation.targets)selected.delete(target.id);render();$('#notice').textContent=operation.targets.length+' imágenes actualizadas en '+RecordFields.definitions[operation.field].label+'.';}
   catch(e){$('#bulk-error').textContent=e.message;}
   finally{busy=false;for(const id of ['bulk-apply','bulk-cancel','bulk-value'])$('#'+id).disabled=false;render();}
  };
  function start(id){
   if(typeof guarded==='function'&&!guarded())return;
   if(!GithubStore.connected){$('#connection-error').textContent='Conectá GitHub para completar o revisar campos.';$('#connection').showModal();return;}
-  const list=items();if(!list.length)return;
+  const candidates=items(),list=id?[candidates.find(i=>i.id===id)].filter(Boolean):selected.size?candidates.filter(i=>selected.has(i.id)):candidates;if(!list.length)return;
   session={field:selector.value,ids:list.map(i=>i.id),cursor:Math.max(0,list.findIndex(i=>i.id===id)),saved:0};openCurrent();
  }
  function openCurrent(){if(!session)return;const image=db.images[session.ids[session.cursor]];if(image)open(image,session.field);}

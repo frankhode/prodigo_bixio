@@ -116,6 +116,16 @@ Autores, firmas, colecciones y carpetas ya se construyen desde datos JSON: los a
 ### Color y edición global por campo
 «Color» se carga en el paso Tipo de imagen y en Completar / revisar un campo. Las fichas anteriores quedan sin dato hasta que se completen; no se asigna un color automáticamente.
 
-El panel permite recorrer todos los campos de una ficha, incluida Imagen vinculada. Para una corrección masiva, elegir el campo, ajustar los filtros de carpeta/estado/búsqueda y el alcance (Vacíos sin revisar, Sin revisar, Con dato o Todas las imágenes). **Editar globalmente…** se ofrece para los combos de clasificación, color, autor y firma. Muestra la cantidad y una muestra del conjunto seleccionado; elegir un valor y pulsar **Aplicar a N imágenes**. El alcance se fija al abrir esa ventana y no se limita a las primeras 50 filas mostradas en el panel.
+El panel permite recorrer todos los campos de una ficha, incluida Imagen vinculada. Para una corrección masiva, elegir el campo, ajustar los filtros de carpeta/estado/búsqueda y el alcance (Vacíos sin revisar, Sin revisar, Con dato o Todas las imágenes). **Editar seleccionadas…** se ofrece para los combos de clasificación, color, autor y firma. El panel muestra una grilla de miniaturas: marcar las imágenes que deben recibir el cambio y abrir **Editar seleccionadas…**. La ventana muestra exclusivamente ese conjunto; elegir un valor y pulsar **Aplicar a N imágenes**. La selección se fija al abrir esa ventana. No hay imágenes preseleccionadas ni un límite de 50 tarjetas.
 
 El guardado global usa un único commit: modifica exclusivamente el campo elegido, marca ese campo revisado y conserva los demás datos, las vinculaciones, los medios y el estado de catalogación. Si una ficha cambió o el repositorio rechaza la escritura, no se aplica ninguna parte de la operación. Los subcampos de retrato solo incluyen imágenes clasificadas como Retrato. Los campos libres, identificadores y vínculos se revisan individualmente.
+
+
+### Selección visual para cambios globales
+Cada miniatura del panel por campo tiene una casilla. Clic sobre la miniatura o su texto marca/desmarca la imagen; el botón **Revisar imagen** abre la revisión individual. Las casillas también se operan con Tab y Espacio.
+
+Usar **Seleccionar todas las visibles**, **Quitar selección** o **Invertir selección** para trabajar por conjuntos. El contador informa seleccionadas / visibles. El filtro **Parte** permite trabajar solo con frentes, reversos, tapas u otras partes, además de los filtros existentes. Al ocultar imágenes con filtros salen de la selección; al cambiar de campo o colección se limpia toda la selección.
+
+Ejemplo: elegir Color y Vacíos sin revisar, filtrar Parte a Frente si corresponde, marcar solo las fotografías sepia y pulsar Editar seleccionadas… → sepia → Aplicar a N imágenes. Los reversos sin marcar conservan su valor vacío. El botón global se habilita únicamente con imágenes marcadas. Después de guardar se limpia la selección aplicada; las restantes fichas quedan intactas.
+
+**Empezar recorrido** recorre las imágenes marcadas cuando hay selección; si no hay ninguna, recorre todas las visibles. **Revisar imagen** abre únicamente la tarjeta elegida.
